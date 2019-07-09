@@ -2,7 +2,8 @@ const functions = require('firebase-functions');
 const admin = require('firebase-admin');
 const app = require('express')();
 
-admin.initializeApp();
+//const fc = require('./secret');
+ 
 
 const firebaseConfig = {
     apiKey: "AIzaSyDQtNbPHtS9LZfZcgthFhd1VPZkW8jR7FA",
@@ -13,6 +14,10 @@ const firebaseConfig = {
     messagingSenderId: "764981075186",
     appId: "1:764981075186:web:3a4fcd5db836912a"
 };
+
+admin.initializeApp();   
+
+
 
 
 
@@ -72,14 +77,14 @@ app.post('/scream', (req, res) => {
 })
 
 app.post('/signup', (req, res) => {
-    const newuser = {
+    const newUser = {
         email: req.body.email,
         password: req.body.password,
-        configPassword: req.body.configPassword,
+        confirmPassword: req.body.confirmPassword,
         handle: req.body.handle,
     };
 
-    firebase.auth().createUserWithEmailAndPassword(newUser.email, newuser.password).then(data =>{
+    firebase.auth().createUserWithEmailAndPassword(newUser.email, newUser.password).then(data =>{
         return res.status(201).json({
             message: `user: ${data.user.uid} siggned up sukcessful`
         }).catch(err => {
