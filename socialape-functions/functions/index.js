@@ -4,6 +4,7 @@ const app = require('express')();
 
 //const fc = require('./secret');
  
+const db = admin.firestore()
 
 const firebaseConfig = {
     apiKey: "AIzaSyDQtNbPHtS9LZfZcgthFhd1VPZkW8jR7FA",
@@ -13,8 +14,7 @@ const firebaseConfig = {
     storageBucket: "socialape-5a865.appspot.com",
     messagingSenderId: "764981075186",
     appId: "1:764981075186:web:3a4fcd5db836912a"
-};
-
+  }
 admin.initializeApp();   
 
 
@@ -67,7 +67,7 @@ app.post('/scream', (req, res) => {
         userHandle: req.body.userHandle,
         createAt: new Date().toISOString()
     };
-    admin.firestore().collection('screams').add(newScream).then(doc => {
+    db.collection('screams').add(newScream).then(doc => {
         res.json({ message: `Documnet ${doc.id} created sucessfully` })
     }).catch(err => {
         res.status(500).json({ error: `something went wrong  ${err}` })
@@ -76,7 +76,7 @@ app.post('/scream', (req, res) => {
 
 })
 
-app.post('/signup', (req, res) => {
+ app.post('/signup', (req, res) =>  {
     const newUser = {
         email: req.body.email,
         password: req.body.password,
@@ -84,17 +84,26 @@ app.post('/signup', (req, res) => {
         handle: req.body.handle,
     };
 
-    firebase.auth().createUserWithEmailAndPassword(newUser.email, newUser.password).then(data =>{
-        return res.status(201).json({
-            message: `user: ${data.user.uid} siggned up sukcessful`
-        }).catch(err => {
-            console.log(err);
-            return res.status(500).json({error: err.code})
+    db.doc(`/users/${newUser.hanadle}`).get().
+    then( doc => {
+        if(doc.exists){
+            return res.status(400).json({handle: 'Mejl juz został uzytyc'})
+        }else{
+            return firebase.auth().createUserWithEmailAndPassword(newUser.email, newUser.password)
+        }
+    }).them(
+        data => {
+           return data.user.getIdToken();
 
-        })
+        }
+    ).then(token =>{
+        return res.status(200).json({token})
+    }).catch(err =>{
+        console.log(err);
+        return res.status(500).json({error: err.code})
     })
 })
-
+ 
 
 exports.api = functions.region('europe-west1').https.onRequest(app);
 
