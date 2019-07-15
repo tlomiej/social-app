@@ -5,8 +5,6 @@ const app = require('express')();
 //const fc = require('./secret');
  
 
-admin.initializeApp();   
-
 const firebaseConfig = {
     apiKey: "AIzaSyDQtNbPHtS9LZfZcgthFhd1VPZkW8jR7FA",
     authDomain: "socialape-5a865.firebaseapp.com",
@@ -15,18 +13,13 @@ const firebaseConfig = {
     storageBucket: "socialape-5a865.appspot.com",
     messagingSenderId: "764981075186",
     appId: "1:764981075186:web:3a4fcd5db836912a"
-  }
+};
 
-  const firebase = require('firebase');
-  firebase.initializeApp(firebaseConfig);
-
+admin.initializeApp();   
 
 
-
-const db = admin.firestore()
-
-
-
+const firebase = require('firebase');
+firebase.initializeApp(firebaseConfig);
 
 // // Create and Deploy Your First Cloud Functions
 // // https://firebase.google.com/docs/functions/write-firebase-functions
@@ -71,7 +64,7 @@ app.post('/scream', (req, res) => {
         userHandle: req.body.userHandle,
         createAt: new Date().toISOString()
     };
-    db.collection('screams').add(newScream).then(doc => {
+    admin.firestore().collection('screams').add(newScream).then(doc => {
         res.json({ message: `Documnet ${doc.id} created sucessfully` })
     }).catch(err => {
         res.status(500).json({ error: `something went wrong  ${err}` })
@@ -81,14 +74,14 @@ app.post('/scream', (req, res) => {
 })
 
 app.post('/signup', (req, res) => {
-    const newuser = {
+    const newUser = {
         email: req.body.email,
         password: req.body.password,
-        configPassword: req.body.configPassword,
+        confirmPassword: req.body.confirmPassword,
         handle: req.body.handle,
     };
 
-    firebase.auth().createUserWithEmailAndPassword(newUser.email, newuser.password).then(data =>{
+    firebase.auth().createUserWithEmailAndPassword(newUser.email, newUser.password).then(data =>{
         return res.status(201).json({
             message: `user: ${data.user.uid} siggned up sukcessful`
         }).catch(err => {
@@ -99,7 +92,5 @@ app.post('/signup', (req, res) => {
     })
 })
 
- 
 
 exports.api = functions.region('europe-west1').https.onRequest(app);
-
