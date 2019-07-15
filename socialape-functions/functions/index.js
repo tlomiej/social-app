@@ -3,7 +3,7 @@ const admin = require('firebase-admin');
 const app = require('express')();
 
 //const fc = require('./secret');
- 
+
 
 const firebaseConfig = {
     apiKey: "AIzaSyDQtNbPHtS9LZfZcgthFhd1VPZkW8jR7FA",
@@ -15,11 +15,14 @@ const firebaseConfig = {
     appId: "1:764981075186:web:3a4fcd5db836912a"
 };
 
-admin.initializeApp();   
+admin.initializeApp();
 
 
 const firebase = require('firebase');
 firebase.initializeApp(firebaseConfig);
+
+const db = admin.firestore();
+
 
 // // Create and Deploy Your First Cloud Functions
 // // https://firebase.google.com/docs/functions/write-firebase-functions
@@ -30,7 +33,7 @@ exports.helloWorld = functions.https.onRequest((request, response) => {
 
 
 app.get('/screams', (req, res) => {
-    admin.firestore().collection('screams').orderBy('createAt', 'desc').get().then((data) => {
+    db.collection('screams').orderBy('createAt', 'desc').get().then((data) => {
         let screams = [];
         data.forEach((doc) => {
             screams.push(
@@ -64,7 +67,7 @@ app.post('/scream', (req, res) => {
         userHandle: req.body.userHandle,
         createAt: new Date().toISOString()
     };
-    admin.firestore().collection('screams').add(newScream).then(doc => {
+    db.collection('screams').add(newScream).then(doc => {
         res.json({ message: `Documnet ${doc.id} created sucessfully` })
     }).catch(err => {
         res.status(500).json({ error: `something went wrong  ${err}` })
@@ -81,16 +84,23 @@ app.post('/signup', (req, res) => {
         handle: req.body.handle,
     };
 
-    firebase.auth().createUserWithEmailAndPassword(newUser.email, newUser.password).then(data =>{
-        return res.status(201).json({
-            message: `user: ${data.user.uid} siggned up sukcessful`
-        }).catch(err => {
-            console.log(err);
-            return res.status(500).json({error: err.code})
+    db.doc(`/users/${newUser.handle}`).get()
+    .then(doc => {
+        if (doc.exists) {
+            return res.status(400).json({ handle: `this handle is alredy taken` })
+        } else {
+            return firebase.auth().createUserWithEmailAndPassword(newUser.email, newUser.password)
+        }
+    }).then(data => {
+        return data.user.getIdToken();
 
-        })
+    }).then(token => {
+        return res.status(201).json({ token })
+    }).catch(err => {
+        console.error(err);
+        return res.status(500).json({ error: err.code })
     })
+
 })
 
-
-exports.api = functions.region('europe-west1').https.onRequest(app);
+exports.api = functions.region('europe-west1').https.onRequest(app)
