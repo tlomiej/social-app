@@ -83,7 +83,6 @@ app.post('/signup', (req, res) => {
         confirmPassword: req.body.confirmPassword,
         handle: req.body.handle,
     };
-
     db.doc(`/users/${newUser.handle}`).get()
     .then(doc => {
         if (doc.exists) {
@@ -93,7 +92,6 @@ app.post('/signup', (req, res) => {
         }
     }).then(data => {
         return data.user.getIdToken();
-
     }).then(token => {
         return res.status(201).json({ token })
     }).catch(err => {
