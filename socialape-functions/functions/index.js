@@ -4,7 +4,8 @@ const app = require('express')();
 
 //const fc = require('./secret');
  
-const db = admin.firestore()
+
+admin.initializeApp();   
 
 const firebaseConfig = {
     apiKey: "AIzaSyDQtNbPHtS9LZfZcgthFhd1VPZkW8jR7FA",
@@ -15,14 +16,17 @@ const firebaseConfig = {
     messagingSenderId: "764981075186",
     appId: "1:764981075186:web:3a4fcd5db836912a"
   }
-admin.initializeApp();   
+
+  const firebase = require('firebase');
+  firebase.initializeApp(firebaseConfig);
 
 
 
 
+const db = admin.firestore()
 
-const firebase = require('firebase');
-firebase.initializeApp(firebaseConfig);
+
+
 
 // // Create and Deploy Your First Cloud Functions
 // // https://firebase.google.com/docs/functions/write-firebase-functions
@@ -76,33 +80,25 @@ app.post('/scream', (req, res) => {
 
 })
 
- app.post('/signup', (req, res) =>  {
-    const newUser = {
+app.post('/signup', (req, res) => {
+    const newuser = {
         email: req.body.email,
         password: req.body.password,
-        confirmPassword: req.body.confirmPassword,
+        configPassword: req.body.configPassword,
         handle: req.body.handle,
     };
 
-    db.doc(`/users/${newUser.hanadle}`).get().
-    then( doc => {
-        if(doc.exists){
-            return res.status(400).json({handle: 'Mejl juz został uzytyc'})
-        }else{
-            return firebase.auth().createUserWithEmailAndPassword(newUser.email, newUser.password)
-        }
-    }).them(
-        data => {
-           return data.user.getIdToken();
+    firebase.auth().createUserWithEmailAndPassword(newUser.email, newuser.password).then(data =>{
+        return res.status(201).json({
+            message: `user: ${data.user.uid} siggned up sukcessful`
+        }).catch(err => {
+            console.log(err);
+            return res.status(500).json({error: err.code})
 
-        }
-    ).then(token =>{
-        return res.status(200).json({token})
-    }).catch(err =>{
-        console.log(err);
-        return res.status(500).json({error: err.code})
+        })
     })
 })
+
  
 
 exports.api = functions.region('europe-west1').https.onRequest(app);
