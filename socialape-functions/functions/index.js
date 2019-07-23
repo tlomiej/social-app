@@ -1,7 +1,8 @@
 const functions = require('firebase-functions');
-const admin = require('firebase-admin');
+
 const app = require('express')();
 
+const { getAllScreams } = require('./handlers/screams')
 //const fc = require('./secret');
 
 
@@ -15,13 +16,13 @@ const firebaseConfig = {
     appId: "1:764981075186:web:3a4fcd5db836912a"
 };
 
-admin.initializeApp();
+
 
 
 const firebase = require('firebase');
 firebase.initializeApp(firebaseConfig);
 
-const db = admin.firestore();
+
 
 
 // // Create and Deploy Your First Cloud Functions
@@ -53,23 +54,8 @@ const FBAuth = (req, res, next) => {
     })
 }
 
-app.get('/screams', FBAuth, (req, res) => {
-    db.collection('screams').orderBy('createAt', 'desc').get().then((data) => {
-        let screams = [];
-        data.forEach((doc) => {
-            screams.push(
-                {
-                    screamId: doc.id,
-                    body: doc.data().body,
-                    userHandle: doc.data().userHandle,
-                    createAt: new Date().toISOString()
-                }
-            )
-        })
-        return res.json(screams);
-    }).
-        catch(err => { console.error(err) });
-})
+//Screams route
+app.get('/scream', FBAuth, postOneScream)
 
 /* exports.getScreams = functions.https.onRequest((req, res) => {
     admin.firestore().collection('screams').get().then((data) => {
@@ -82,20 +68,7 @@ app.get('/screams', FBAuth, (req, res) => {
         catch(err => { console.error(err) });
 }) */
 
-app.post('/scream', (req, res) => {
-    const newScream = {
-        body: req.body.body,
-        userHandle: req.body.userHandle,
-        createAt: new Date().toISOString()
-    };
-    db.collection('screams').add(newScream).then(doc => {
-        res.json({ message: `Documnet ${doc.id} created sucessfully` })
-    }).catch(err => {
-        res.status(500).json({ error: `something went wrong  ${err}` })
-        console.error(err)
-    })
-
-})
+app.post('/screams', getAllScreams)
 
 const isEmpty = (string) => {
     if (string.trim() === '') return true;
