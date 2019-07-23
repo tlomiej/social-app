@@ -31,8 +31,29 @@ exports.helloWorld = functions.https.onRequest((request, response) => {
     response.send("Hello WORLD!");
 });
 
+const FBAuth = (req, res, next) => {
+    if (req.headers.authorization && req.headres.authorization.startWith('Bearer ')) {
+        idToken = req.headers.authorization.split('Bearer ')[1];
 
-app.get('/screams', (req, res) => {
+    } else {
+        console.error('No token found')
+        return res.status(403).json({ error: 'Unauthorized' });
+    }
+
+    admin.auth().verifyIdToken(idToken).then(decodeToken => {
+        req.user = decodeToken;
+        console.log(decodeToken);
+        return db.collection('users').where('userId', '==', req.user.uid).limit(1).get();
+    }).then(data => {
+        req.user.handle = data.docs[0].data().handle;
+        return next();
+    }).catch(err => {
+        console.error('Error while veryfiyng token', err);
+        return res.status(403).json(err);
+    })
+}
+
+app.get('/screams', FBAuth, (req, res) => {
     db.collection('screams').orderBy('createAt', 'desc').get().then((data) => {
         let screams = [];
         data.forEach((doc) => {
@@ -165,10 +186,14 @@ app.post('/login', (req, res) => {
     firebase.auth().signInWithEmailAndPassword(user.email, user.password).then(data => {
         return data.user.getIdToken();
     }).then(token => {
-        return res.json({token});
-    }).catch(err =>{
+        return res.json({ token });
+    }).catch(err => {
         console.error(err)
-        return res.status(500).json({ errors: err.code});
+        if (err.code === 'auth/wrong-password') {
+            return res.status(403).json({ general: 'Wrong creadential, pleas try again' })
+        }
+        else
+            return res.status(500).json({ errors: err.code });
     });
 })
 
