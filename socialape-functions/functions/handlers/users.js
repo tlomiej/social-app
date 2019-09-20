@@ -4,6 +4,8 @@ const config = required('../util/config');
 
 firebase.initializeApp(config);
 
+const { validateSignupData, validateLoginData} = required('../util/validators.js');
+
 exports.singup = (req, res) => {
     const newUser = {
         email: req.body.email,
@@ -12,9 +14,11 @@ exports.singup = (req, res) => {
         handle: req.body.handle,
     };
 
-   
-    let token, userId;
+    const { valid, errors} = validateSignupData(newUser);
 
+    if(!valid) return res.status(400).json(errors);
+
+    let token, userId;
     db.doc(`/users/${newUser.handle}`).get()
         .then(doc => {
             if (doc.exists) {
@@ -56,13 +60,11 @@ exports.login = (req, res) => {
         password: req.body.password
     };
 
-    let errors = {};
+    const { valid, errors} = validateLoginData(user);
 
-    if (isEmpty(user.email)) errors.email = 'Must not be empty';
-    if (isEmpty(user.password)) errors.password = 'Must not be empty';
+    if(!valid) return res.status(400).json(errors);
 
-    if (Object.keys(errors).length > 0) return res.status(400).json(errors);
-
+  
     firebase.auth().signInWithEmailAndPassword(user.email, user.password).then(data => {
         return data.user.getIdToken();
     }).then(token => {

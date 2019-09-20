@@ -1,4 +1,4 @@
-const {admin} = require('./admin');
+  const {admin} = require('./admin');
 module.exports = (req, res, next) => {
     if (req.headers.authorization && req.headres.authorization.startWith('Bearer ')) {
         idToken = req.headers.authorization.split('Bearer ')[1];
